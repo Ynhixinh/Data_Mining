@@ -1,0 +1,14 @@
+Age,Income,Education,Buy
+Young,Low,High,No
+Young,Low,High,No
+Young,High,Medium,Yes
+Middle,High,Low,Yes
+Middle,High,Low,No
+Middle,Low,Medium,No
+Old,Low,Low,Yes
+Old,High,High,Yes
+Old,High,Medium,No
+Young,High,Medium,Yes
+Middle,Low,High,No
+Middle,Low,High,Yes
+Old,Low,Medium,No

@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Upload CSV & Create Decision Tree</title>
+</head>
+<body>
+    <h1>Upload CSV File and Create Decision Tree</h1>
+    <form method="POST" enctype="multipart/form-data">
+        <input type="file" name="file" accept=".csv" required>
+        <button type="submit" name="action" value="decision_tree">Create Decision Tree</button>
+        <button type="submit" name="action" value="bayes_classification">Run Naive Bayes</button>
+    </form>
+
+    {% if tree %}
+        <h2>Decision Tree:</h2>
+        <pre>{{ tree }}</pre>
+    {% endif %}
+    
+    {% if predictions %}
+        <h2>Naive Bayes Predictions:</h2>
+        <ul>
+            {% for prediction in predictions %}
+                <li>{{ prediction }}</li>
+            {% endfor %}
+        </ul>
+    {% endif %}
+</body>
+</html>

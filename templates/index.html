@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cây Quyết Định</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background-color: #f4f4f9;
+        }
+        h1 {
+            text-align: center;
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+        }
+        .form-group {
+            margin-bottom: 20px;
+        }
+        .form-group input[type="file"] {
+            font-size: 16px;
+        }
+        .form-group button {
+            padding: 10px 20px;
+            font-size: 16px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            cursor: pointer;
+        }
+        .form-group button:hover {
+            background-color: #45a049;
+        }
+        #tree {
+            text-align: center;
+            margin-top: 20px;
+        }
+        img {
+            max-width: 100%;
+            height: auto;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Data Mining</h1>
+        <form action="/" method="post" enctype="multipart/form-data">
+            <div class="form-group">
+                <label for="file">Chọn File CSV:</label>
+                <input type="file" name="file" id="file" required>
+            </div>
+            <h1>Chọn thuật toán</h1>
+            <div class="form-group">
+                <button type="submit">Cây Quyết Định</button>
+            </div>
+        </form>
+        
+        {% if image %}
+        <div id="tree">
+            <h3>Cây Quyết Định:</h3>
+            <img src="{{ url_for('get_image', filename=image) }}" alt="Decision Tree">
+        </div>
+        {% endif %}
+    </div>
+</body>
+</html>

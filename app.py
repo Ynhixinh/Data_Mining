@@ -2,6 +2,9 @@ from flask import Flask, render_template, request, send_from_directory
 import os
 import numpy as np
 import pandas as pd
+import matplotlib.pyplot as plt
+from sklearn.preprocessing import LabelEncoder
+from flask import jsonify
 
 eps = np.finfo(float).eps
 from numpy import log2 as log
@@ -172,8 +175,67 @@ tree = build_tree(df, tree= None)
 graph = pydot.Dot(graph_type = 'digraph')
 walk_tree(graph, tree)
 
-# graph.write_png("media/DecisionTree3.png")
-#------------------------------------------------------------------------------------------------
+
+#-------------------------------------------K-Means Gom cụm ------------------------------------------------------------------#
+# Khởi tạo lớp KMeans
+class KMeans:
+    def __init__(self, n_clusters=3, max_iters=100):
+        self.n_clusters = n_clusters
+        self.max_iters = max_iters
+        self.centroids = None
+        self.labels = None
+
+    def initialize_specific_clusters(self, X, initial_clusters):
+        self.labels = np.zeros(len(X), dtype=int)
+
+        # Gán nhãn theo phân hoạch ban đầu
+        for cluster_id, points in initial_clusters.items():
+            for point_idx in points:
+                self.labels[point_idx] = cluster_id
+
+        # Tính centroids ban đầu
+        self.centroids = np.zeros((self.n_clusters, X.shape[1]))
+        for i in range(self.n_clusters):
+            cluster_points = X[self.labels == i]
+            if len(cluster_points) > 0:
+                self.centroids[i] = np.mean(cluster_points, axis=0)
+
+        return self.labels
+
+    def fit(self, X):
+        for iteration in range(self.max_iters):
+            old_centroids = self.centroids.copy()
+            old_labels = self.labels.copy()
+
+            # Tính khoảng cách từ mỗi điểm đến các centroids
+            distances = np.zeros((X.shape[0], self.n_clusters))  # Tạo mảng lưu khoảng cách
+            for i in range(self.n_clusters):
+                # Tính khoảng cách Euclidean giữa điểm và centroid i
+                distances[:, i] = np.linalg.norm(X - self.centroids[i], axis=1)
+
+            # Gán nhãn mới
+            self.labels = np.argmin(distances, axis=1)
+
+            # Cập nhật centroids
+            for k in range(self.n_clusters):
+                if np.sum(self.labels == k) > 0:
+                    self.centroids[k] = X[self.labels == k].mean(axis=0)
+
+            # Kiểm tra hội tụ
+            if np.all(old_centroids == self.centroids) and np.all(old_labels == self.labels):
+                print(f"Hội tụ sau {iteration + 1} vòng lặp")
+                break
+
+            # In thông tin mỗi vòng lặp
+            print(f"\nVòng lặp {iteration + 1}:")
+            print("Centroids:", self.centroids)
+            for k in range(self.n_clusters):
+                cluster_points = X[self.labels == k]
+                print(f"Cụm {k + 1}: {[f'A{i+1}' for i, label in enumerate(self.labels) if label == k]}")
+
+        return self.labels
+
+#----------------------------------------------------------------------------------------------------------------------------#
 MEDIA_FOLDER = os.path.join(os.getcwd(), 'media')
 
 @app.route('/media/<filename>')
@@ -186,9 +248,61 @@ def index():
         file = request.files['file']
         if file:
             df = pd.read_csv(file)
-            tree = build_tree(df)
-            plot_tree(tree)
-            return render_template("index.html", image="DecisionTree3.png")
+            if 'decision_tree' in request.form:
+                tree = build_tree(df)
+                plot_tree(tree)
+                return render_template("index.html", image="DecisionTree3.png")
+            
+            elif 'K-means' in request.form:
+                # chuyển thành số
+                le = LabelEncoder()
+                df_encoded = df.apply(le.fit_transform)
+
+                # Lấy 3 thuộc tính đầu tiên
+                data = df_encoded.iloc[:, :3].to_numpy()
+
+                # Khởi tạo điểm (dòng dữ liệu) thuộc các cụm
+                initial_clusters = {
+                    0: [0, 1, 2, 3, 4],
+                    1: [5, 6, 7, 8],       
+                    2: [9, 10, 11, 12]     
+                }
+
+                # Khởi tạo KMeans
+                kmeans = KMeans(n_clusters=3)
+                initial_labels = kmeans.initialize_specific_clusters(data, initial_clusters)
+                final_labels = kmeans.fit(data)
+
+                # # Lưu hình ảnh kết quả phân cụm
+                # plt.figure(figsize=(8, 6))
+                # colors = ['r', 'g', 'b']
+                # for i in range(len(data)):
+                #     plt.scatter(data[i, 0], data[i, 1], c=colors[kmeans.labels_[i]], s=100)
+                # plt.scatter(kmeans.cluster_centers_[:, 0], kmeans.cluster_centers_[:, 1], c='black', marker='*', s=200)
+                # plt.title("KMeans Clustering")
+                # plt.xlabel("Feature 1")
+                # plt.ylabel("Feature 2")
+                # plt.grid(True)
+
+                # # Lưu kết quả đồ thị vào file trong thư mục media
+                # image_path = os.path.join(MEDIA_FOLDER, "KMeansResult.png")
+                # plt.savefig(image_path)
+                # plt.close()
+
+                # Truyền kết quả phân cụm vào template
+                clusters_info = {}
+                for k in range(kmeans.n_clusters):
+                    cluster_points = [f'A{i+1}' for i, label in enumerate(kmeans.labels_) if label == k]
+                    clusters_info[f"Cụm {k+1}"] = cluster_points
+
+                centroids = kmeans.cluster_centers_
+
+                # Trả về dữ liệu dưới dạng JSON
+                return jsonify({
+                    "clusters_info": clusters_info,
+                    "centroids": centroids.tolist(),  # Chuyển đổi numpy array thành list
+                })
+                
 
     return render_template("index.html", image=None)
 

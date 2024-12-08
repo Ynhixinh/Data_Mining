@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Cây Quyết Định</title>
+    <title>Cây Quyết Định và KMeans</title>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -43,28 +43,89 @@
             max-width: 100%;
             height: auto;
         }
+        .results {
+            margin-top: 20px;
+        }
+        .clusters-info, .centroids-info {
+            margin-top: 20px;
+        }
     </style>
 </head>
 <body>
     <div class="container">
         <h1>Data Mining</h1>
-        <form action="/" method="post" enctype="multipart/form-data">
+        <form id="upload-form" action="/" method="post" enctype="multipart/form-data">
             <div class="form-group">
                 <label for="file">Chọn File CSV:</label>
                 <input type="file" name="file" id="file" required>
             </div>
-            <h1>Chọn thuật toán</h1>
+            <h2>Chọn thuật toán</h2>
             <div class="form-group">
-                <button type="submit">Cây Quyết Định</button>
+                <button type="submit" name="decision_tree">Cây Quyết Định</button>
+                <button type="submit" name="K-means">Gom cụm KMeans</button>
             </div>
         </form>
-        
+
+        <!-- Hiển thị kết quả Decision Tree -->
         {% if image %}
-        <div id="tree">
+        <div id="tree" class="results">
             <h3>Cây Quyết Định:</h3>
             <img src="{{ url_for('get_image', filename=image) }}" alt="Decision Tree">
         </div>
         {% endif %}
+
+        <!-- Hiển thị kết quả KMeans
+        <div id="kmeans-results" class="results" style="display: none;">
+            <h3>Kết quả phân cụm:</h3>
+            <div id="clusters-info"></div>
+            <div id="centroids-info"></div>
+        </div>
+
     </div>
+
+    <script>
+        document.getElementById("upload-form").onsubmit = function(event) {
+            event.preventDefault(); // Ngừng gửi form mặc định
+
+            var formData = new FormData(this);
+            var decisionTreeButton = document.querySelector('button[name="decision_tree"]');
+            var kmeansButton = document.querySelector('button[name="K-means"]');
+
+            // Kiểm tra nút nào được nhấn
+            var selectedAlgorithm = decisionTreeButton.clicked ? 'decision_tree' : 'K-means';
+            formData.append(selectedAlgorithm, 'true'); // Đảm bảo thuật toán được gửi cùng với form
+
+            fetch("/", {
+                method: "POST",
+                body: formData,
+            })
+            .then(response => response.json())  // Nhận JSON nếu là K-means
+            .then(data => {
+                if (data.clusters_info) {
+                    // Hiển thị kết quả phân cụm KMeans
+                    var clustersInfoDiv = document.getElementById("clusters-info");
+                    clustersInfoDiv.innerHTML = "";
+                    for (const [cluster, points] of Object.entries(data.clusters_info)) {
+                        var p = document.createElement("p");
+                        p.innerText = `${cluster}: ${points.join(", ")}`;
+                        clustersInfoDiv.appendChild(p);
+                    }
+
+                    var centroidsInfoDiv = document.getElementById("centroids-info");
+                    centroidsInfoDiv.innerHTML = "";
+                    data.centroids.forEach((centroid, index) => {
+                        var p = document.createElement("p");
+                        p.innerText = `Trọng tâm cụm ${index + 1}: (${centroid[0].toFixed(2)}, ${centroid[1].toFixed(2)})`;
+                        centroidsInfoDiv.appendChild(p);
+                    });
+
+                    document.getElementById("kmeans-results").style.display = "block";
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+            });
+        }
+    </script> -->
 </body>
 </html>
